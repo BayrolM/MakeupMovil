@@ -4,6 +4,7 @@ import '../screens/auth/register_screen.dart';
 import '../screens/client/cliente_home_screen.dart';
 import '../screens/client/cliente_checkout_screen.dart';
 import '../screens/client/cliente_pago_screen.dart';
+import '../screens/client/producto_detalle_screen.dart';
 import '../screens/admin/admin_home_screen.dart';
 import '../screens/admin/admin_crear_pedido_screen.dart';
 import '../screens/admin/admin_editar_pedido_screen.dart';
@@ -19,6 +20,13 @@ class AppRoutes {
   static const String adminCrearPedido = '/admin-crear-pedido';
   static const String adminEditarPedido = '/admin-editar-pedido';
   static const String profile = '/profile';
+  static const String productoDetalle = '/producto-detalle';
+
+  static Route<dynamic> productoDetalleRoute(String productId) {
+    return MaterialPageRoute(
+      builder: (_) => ProductoDetalleScreen(productId: productId),
+    );
+  }
 
   static Map<String, WidgetBuilder> getRoutes() {
     return {

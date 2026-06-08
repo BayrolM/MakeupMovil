@@ -742,15 +742,257 @@ class _ClienteHomeScreenState extends State<ClienteHomeScreen> with SingleTicker
                   ),
           ),
           const SizedBox(height: 20),
+
+          // ── Beneficios / Trust Badges ─────────────────
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: [
+                _buildBenefitItem(Icons.local_shipping_outlined, 'Envío seguro', 'Entrega confiable'),
+                _buildBenefitItem(Icons.shield_outlined, 'Pago seguro', 'Transferencia bancaria'),
+                _buildBenefitItem(Icons.replay_30_outlined, 'Devolución', '30 días'),
+                _buildBenefitItem(Icons.headset_mic_outlined, 'Soporte flexible', 'Chatea con nos.'),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          // ── Métodos de pago ────────────────────────────
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.grey.shade200),
+              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 8, offset: const Offset(0, 2))],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Métodos de pago', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 4),
+                Text('Aceptamos transferencia bancaria Nequi, Daviplata y Bancolombia.', style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildPaymentBadge(Icons.account_balance, 'Nequi'),
+                    _buildPaymentBadge(Icons.account_balance_wallet, 'Bancolombia'),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          // ── Contáctanos ───────────────────────────────
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.grey.shade200),
+              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 8, offset: const Offset(0, 2))],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(color: AppTheme.deepRose.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
+                      child: const Icon(Icons.support_agent, color: AppTheme.deepRose, size: 20),
+                    ),
+                    const SizedBox(width: 10),
+                    const Expanded(
+                      child: Text('¿Necesitas ayuda?', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text('Escríbenos y te respondemos lo antes posible.', style: TextStyle(fontSize: 12, color: Colors.grey.shade500, height: 1.4)),
+                const SizedBox(height: 14),
+                GestureDetector(
+                  onTap: () {
+                    showDialog(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                        title: const Text('Contáctanos'),
+                        content: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Text('Escríbenos a:', style: TextStyle(fontSize: 13)),
+                            const SizedBox(height: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                              decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(10)),
+                              child: const Text('soporte@glamourml.com', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.deepRose)),
+                            ),
+                          ],
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx),
+                            child: const Text('Cerrar'),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                  child: Container(
+                    width: double.infinity,
+                    height: 46,
+                    decoration: BoxDecoration(
+                      color: AppTheme.deepRose,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.email_outlined, color: Colors.white, size: 18),
+                        SizedBox(width: 8),
+                        Text('Enviar correo', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 28),
+
+          // ── Footer / Info de la marca ──────────────────
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade900,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.asset('images/logo_glamour.png', width: 28, height: 28, fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => const Icon(Icons.auto_awesome, color: AppTheme.deepRose, size: 24)),
+                    ),
+                    const SizedBox(width: 8),
+                    const Text('Glamour ML', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Text('Tu tienda de belleza y cuidado personal de confianza.', style: TextStyle(color: Colors.grey.shade400, fontSize: 12)),
+                const SizedBox(height: 20),
+
+                // Links
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildFooterLink(Icons.help_outline, 'Ayuda'),
+                    _buildFooterLink(Icons.description_outlined, 'Términos'),
+                    _buildFooterLink(Icons.privacy_tip_outlined, 'Privacidad'),
+                    _buildFooterLink(Icons.info_outline, 'Nosotros'),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                Divider(color: Colors.grey.shade800, height: 1),
+                const SizedBox(height: 16),
+
+                // Redes sociales
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                  _buildSocialIcon(Icons.facebook),
+                  _buildSocialIcon(Icons.camera_alt_outlined),
+                  _buildSocialIcon(Icons.music_note_outlined),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Center(
+                  child: Text('© 2026 Glamour ML. Todos los derechos reservados.',
+                      style: TextStyle(color: Colors.grey.shade600, fontSize: 10)),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
+    );
+  }
+
+  Widget _buildBenefitItem(IconData icon, String title, String subtitle) {
+    return Expanded(
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppTheme.deepRose.withValues(alpha: 0.08),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, size: 18, color: AppTheme.deepRose),
+          ),
+          const SizedBox(height: 6),
+          Text(title, textAlign: TextAlign.center, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 2),
+          Text(subtitle, textAlign: TextAlign.center, style: TextStyle(fontSize: 8, color: Colors.grey.shade500)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFooterLink(IconData icon, String label) {
+    return Column(
+      children: [
+        Icon(icon, color: Colors.grey.shade400, size: 20),
+        const SizedBox(height: 4),
+        Text(label, style: TextStyle(color: Colors.grey.shade400, fontSize: 11)),
+      ],
+    );
+  }
+
+  Widget _buildSocialIcon(IconData icon) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 8),
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade800,
+        shape: BoxShape.circle,
+      ),
+      child: Icon(icon, color: Colors.grey.shade400, size: 18),
+    );
+  }
+
+  Widget _buildPaymentBadge(IconData icon, String label) {
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: AppTheme.deepRose.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(icon, size: 22, color: AppTheme.deepRose),
+        ),
+        const SizedBox(height: 6),
+        Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.grey.shade700)),
+      ],
     );
   }
 
   Widget _buildFeaturedProductCard(ProductModel prod) {
     final carritoProv = Provider.of<CarritoProvider>(context);
 
-    return Container(
+    return GestureDetector(
+      onTap: () => Navigator.push(context, AppRoutes.productoDetalleRoute(prod.id)),
+      child: Container(
       width: 160,
       margin: const EdgeInsets.symmetric(horizontal: 4),
       child: Card(
@@ -837,6 +1079,7 @@ class _ClienteHomeScreenState extends State<ClienteHomeScreen> with SingleTicker
           ],
         ),
       ),
+    ),
     );
   }
 
@@ -949,7 +1192,9 @@ class _ClienteHomeScreenState extends State<ClienteHomeScreen> with SingleTicker
   Widget _buildProductCard(ProductModel prod) {
     final carritoProv = Provider.of<CarritoProvider>(context);
 
-    return Card(
+    return GestureDetector(
+      onTap: () => Navigator.push(context, AppRoutes.productoDetalleRoute(prod.id)),
+      child: Card(
       elevation: 3,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Column(
@@ -1053,6 +1298,7 @@ class _ClienteHomeScreenState extends State<ClienteHomeScreen> with SingleTicker
           ),
         ],
       ),
+    ),
     );
   }
 
