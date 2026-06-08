@@ -1,0 +1,115 @@
+# ──────────────────────────────────────────────
+# Proyectos excluidos (solo se sube movil_makeup)
+# ──────────────────────────────────────────────
+frontend/
+backend/
+
+# ──────────────────────────────────────────────
+# Archivos de configuración / secrets
+# ──────────────────────────────────────────────
+*.env
+.env
+.env.*
+
+# ──────────────────────────────────────────────
+# IDE / Editor
+# ──────────────────────────────────────────────
+.vscode/
+.idea/
+*.iml
+*.ipr
+*.iws
+*.swp
+*.swo
+*~
+.antigravitycli/
+
+# ──────────────────────────────────────────────
+# Flutter / Dart
+# ──────────────────────────────────────────────
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+build/
+coverage/
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.metal/
+metadata/
+
+# ──────────────────────────────────────────────
+# Android
+# ──────────────────────────────────────────────
+android/.gradle/
+android/app/debug/
+android/app/profile/
+android/app/release/
+android/local.properties
+android/key.properties
+android/*.jks
+android/*.keystore
+**/android/captures/
+
+# ──────────────────────────────────────────────
+# iOS / macOS
+# ──────────────────────────────────────────────
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/Flutter/Generated.xcconfig
+ios/Flutter/app.framework
+ios/Flutter/flutter_export_environment.sh
+ios/ServiceDefinitions.json
+ios/Runner/GeneratedPluginRegistrant.*
+macos/Pods/
+macos/Flutter/GeneratedPluginRegistrant.*
+
+# ──────────────────────────────────────────────
+# Windows
+# ──────────────────────────────────────────────
+windows/flutter/
+windows/CMakeFiles/
+windows/CMakeCache.txt
+windows/cmake_install.cmake
+windows/runner/
+windows/Debug/
+windows/Release/
+windows/x64/
+
+# ──────────────────────────────────────────────
+# Linux
+# ──────────────────────────────────────────────
+linux/flutter/
+linux/CMakeFiles/
+linux/CMakeCache.txt
+linux/cmake_install.cmake
+linux/runner/
+
+# ──────────────────────────────────────────────
+# Web (temporales / build)
+# ──────────────────────────────────────────────
+web/favicon.png
+
+# ──────────────────────────────────────────────
+# Archivos generados / temporales
+# ──────────────────────────────────────────────
+*.class
+*.log
+*.pyc
+.DS_Store
+Thumbs.db
+*.bak
+*.tmp
+*.orig
+migrate_working_dir/
+app.*.symbols
+app.*.map.json
+
+# ──────────────────────────────────────────────
+# Node (si hay scripts auxiliares)
+# ──────────────────────────────────────────────
+node_modules/
+package-lock.json
