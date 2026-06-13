@@ -185,30 +185,34 @@ class PedidoProvider with ChangeNotifier {
         final List<dynamic> ordersList = data['data'] ?? [];
         final fetched = ordersList.map((json) => OrderModel.fromJson(json)).toList();
 
-        // Preservar items ya cargados de pedidos anteriores
+        // Preservar items y datos de envío ya cargados de pedidos anteriores
         _pedidos = fetched.map((pedido) {
           final existing = _pedidos.firstWhere(
             (p) => p.id == pedido.id,
             orElse: () => pedido,
           );
-          if (existing.items.isNotEmpty && pedido.items.isEmpty) {
-            return OrderModel(
-              id: pedido.id,
-              fecha: pedido.fecha,
-              direccion: pedido.direccion,
-              ciudad: pedido.ciudad,
-              departamento: pedido.departamento,
-              total: pedido.total,
-              estado: pedido.estado,
-              pagoConfirmado: pedido.pagoConfirmado,
-              comprobanteUrl: pedido.comprobanteUrl,
-              clienteNombre: pedido.clienteNombre,
-              clienteEmail: pedido.clienteEmail,
-              metodoPago: pedido.metodoPago,
-              items: existing.items,
-            );
-          }
-          return pedido;
+          return OrderModel(
+            id: pedido.id,
+            fecha: pedido.fecha,
+            direccion: pedido.direccion,
+            ciudad: pedido.ciudad,
+            departamento: pedido.departamento,
+            total: pedido.total,
+            estado: pedido.estado,
+            pagoConfirmado: pedido.pagoConfirmado,
+            comprobanteUrl: pedido.comprobanteUrl ?? existing.comprobanteUrl,
+            clienteNombre: pedido.clienteNombre ?? existing.clienteNombre,
+            clienteEmail: pedido.clienteEmail ?? existing.clienteEmail,
+            metodoPago: pedido.metodoPago,
+            transportadora: pedido.transportadora ?? existing.transportadora,
+            numeroGuia: pedido.numeroGuia ?? existing.numeroGuia,
+            trackingLink: pedido.trackingLink ?? existing.trackingLink,
+            fechaEnvio: pedido.fechaEnvio ?? existing.fechaEnvio,
+            fechaEstimada: pedido.fechaEstimada ?? existing.fechaEstimada,
+            estadoDevolucion: pedido.estadoDevolucion ?? existing.estadoDevolucion,
+            devolucionInfo: pedido.devolucionInfo ?? existing.devolucionInfo,
+            items: existing.items.isNotEmpty ? existing.items : pedido.items,
+          );
         }).toList();
       } else {
         _errorMessage = 'No se pudieron cargar los pedidos.';
@@ -241,30 +245,34 @@ class PedidoProvider with ChangeNotifier {
         final List<dynamic> ordersList = data['data'] ?? [];
         final fetched = ordersList.map((json) => OrderModel.fromJson(json)).toList();
 
-        // Preservar items ya cargados de pedidos anteriores
+        // Preservar items y datos de envío ya cargados de pedidos anteriores
         _pedidos = fetched.map((pedido) {
           final existing = _pedidos.firstWhere(
             (p) => p.id == pedido.id,
             orElse: () => pedido,
           );
-          if (existing.items.isNotEmpty && pedido.items.isEmpty) {
-            return OrderModel(
-              id: pedido.id,
-              fecha: pedido.fecha,
-              direccion: pedido.direccion,
-              ciudad: pedido.ciudad,
-              departamento: pedido.departamento,
-              total: pedido.total,
-              estado: pedido.estado,
-              pagoConfirmado: pedido.pagoConfirmado,
-              comprobanteUrl: pedido.comprobanteUrl,
-              clienteNombre: pedido.clienteNombre,
-              clienteEmail: pedido.clienteEmail,
-              metodoPago: pedido.metodoPago,
-              items: existing.items,
-            );
-          }
-          return pedido;
+          return OrderModel(
+            id: pedido.id,
+            fecha: pedido.fecha,
+            direccion: pedido.direccion,
+            ciudad: pedido.ciudad,
+            departamento: pedido.departamento,
+            total: pedido.total,
+            estado: pedido.estado,
+            pagoConfirmado: pedido.pagoConfirmado,
+            comprobanteUrl: pedido.comprobanteUrl ?? existing.comprobanteUrl,
+            clienteNombre: pedido.clienteNombre ?? existing.clienteNombre,
+            clienteEmail: pedido.clienteEmail ?? existing.clienteEmail,
+            metodoPago: pedido.metodoPago,
+            transportadora: pedido.transportadora ?? existing.transportadora,
+            numeroGuia: pedido.numeroGuia ?? existing.numeroGuia,
+            trackingLink: pedido.trackingLink ?? existing.trackingLink,
+            fechaEnvio: pedido.fechaEnvio ?? existing.fechaEnvio,
+            fechaEstimada: pedido.fechaEstimada ?? existing.fechaEstimada,
+            estadoDevolucion: pedido.estadoDevolucion ?? existing.estadoDevolucion,
+            devolucionInfo: pedido.devolucionInfo ?? existing.devolucionInfo,
+            items: existing.items.isNotEmpty ? existing.items : pedido.items,
+          );
         }).toList();
       } else {
         _errorMessage = 'Error al cargar listado administrativo de pedidos.';
