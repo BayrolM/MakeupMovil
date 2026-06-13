@@ -25,7 +25,6 @@ class _ClienteHomeScreenState extends State<ClienteHomeScreen> with SingleTicker
   int _currentIndex = 0;
   String _searchQuery = '';
   String? _selectedCategoryId;
-  Timer? _autoRefreshTimer;
 
   final _searchController = TextEditingController();
   final GlobalKey _cartIconKey = GlobalKey();
@@ -85,7 +84,6 @@ class _ClienteHomeScreenState extends State<ClienteHomeScreen> with SingleTicker
 
   @override
   void dispose() {
-    _autoRefreshTimer?.cancel();
     _navAnimController?.dispose();
     _searchController.dispose();
     super.dispose();
@@ -109,31 +107,12 @@ class _ClienteHomeScreenState extends State<ClienteHomeScreen> with SingleTicker
     if (index == 1) {
       final productProv = Provider.of<ProductoProvider>(context, listen: false);
       productProv.cargarProductos(search: _searchQuery, categoryId: _selectedCategoryId);
-      _stopAutoRefresh();
     } else if (index == 2) {
       final authProv = Provider.of<AuthProvider>(context, listen: false);
       if (authProv.isLoggedIn) {
         Provider.of<PedidoProvider>(context, listen: false).cargarPedidosCliente(authProv.token!);
-        _startAutoRefresh();
       }
-    } else {
-      _stopAutoRefresh();
     }
-  }
-
-  void _startAutoRefresh() {
-    _autoRefreshTimer?.cancel();
-    _autoRefreshTimer = Timer.periodic(const Duration(seconds: 15), (_) {
-      final authProv = Provider.of<AuthProvider>(context, listen: false);
-      if (authProv.isLoggedIn) {
-        Provider.of<PedidoProvider>(context, listen: false).cargarPedidosCliente(authProv.token!);
-      }
-    });
-  }
-
-  void _stopAutoRefresh() {
-    _autoRefreshTimer?.cancel();
-    _autoRefreshTimer = null;
   }
 
   void _cerrarSesion() async {
