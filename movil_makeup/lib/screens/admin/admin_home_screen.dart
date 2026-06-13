@@ -186,69 +186,75 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
       margin: const EdgeInsets.only(bottom: 16.0),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: ExpansionTile(
-        title: Row(
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Flexible(
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
+            Row(
+              children: [
+                Flexible(
+                  child: Text(
                     "Pedido #${order.id}",
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
-                  const SizedBox(width: 8),
-                  _buildStatusChip(order.estado),
-                ],
-              ),
-            ),
-            const SizedBox(width: 4),
-            if (['pendiente', 'preparado', 'procesando'].contains(order.estado.toLowerCase()))
-              SizedBox(
-                width: 36,
-                height: 36,
-                child: IconButton(
-                  padding: EdgeInsets.zero,
-                  iconSize: 20,
-                  icon: const Icon(Icons.edit, color: AppTheme.deepRose),
-                  tooltip: 'Editar pedido',
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => AdminEditarPedidoScreen(orderId: order.id),
-                      ),
-                    );
-                  },
                 ),
-              ),
-            SizedBox(
-              width: 36,
-              height: 36,
-              child: IconButton(
-                padding: EdgeInsets.zero,
-                iconSize: 20,
-                icon: Icon(
-                  order.comprobanteUrl != null && order.comprobanteUrl!.isNotEmpty
-                      ? Icons.payments
-                      : Icons.payments_outlined,
-                  color: order.pagoConfirmado
-                      ? Colors.green
-                      : (order.metodoPago == 'transferencia' ? Colors.orange : Colors.grey),
+                const SizedBox(width: 4),
+                if (['pendiente', 'preparado', 'procesando'].contains(order.estado.toLowerCase()))
+                  SizedBox(
+                    width: 36,
+                    height: 36,
+                    child: IconButton(
+                      padding: EdgeInsets.zero,
+                      iconSize: 20,
+                      icon: const Icon(Icons.edit, color: AppTheme.deepRose),
+                      tooltip: 'Editar pedido',
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => AdminEditarPedidoScreen(orderId: order.id),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                SizedBox(
+                  width: 36,
+                  height: 36,
+                  child: IconButton(
+                    padding: EdgeInsets.zero,
+                    iconSize: 20,
+                    icon: Icon(
+                      order.comprobanteUrl != null && order.comprobanteUrl!.isNotEmpty
+                          ? Icons.payments
+                          : Icons.payments_outlined,
+                      color: order.pagoConfirmado
+                          ? Colors.green
+                          : (order.metodoPago == 'transferencia' ? Colors.orange : Colors.grey),
+                    ),
+                    tooltip: 'Gestionar pago',
+                    onPressed: () => _showPagoModal(order),
+                  ),
                 ),
-                tooltip: 'Gestionar pago',
-                onPressed: () => _showPagoModal(order),
-              ),
+                SizedBox(
+                  width: 36,
+                  height: 36,
+                  child: IconButton(
+                    padding: EdgeInsets.zero,
+                    iconSize: 20,
+                    icon: const Icon(Icons.picture_as_pdf, color: Colors.red),
+                    tooltip: 'Descargar PDF',
+                    onPressed: () => PdfGenerator.generarPdfPedido(order, context),
+                  ),
+                ),
+              ],
             ),
-            SizedBox(
-              width: 36,
-              height: 36,
-              child: IconButton(
-                padding: EdgeInsets.zero,
-                iconSize: 20,
-                icon: const Icon(Icons.picture_as_pdf, color: Colors.red),
-                tooltip: 'Descargar PDF',
-                onPressed: () => PdfGenerator.generarPdfPedido(order, context),
-              ),
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                _buildStatusChip(order.estado),
+                const SizedBox(width: 6),
+                _buildPagoBadge(order),
+              ],
             ),
           ],
         ),
@@ -341,44 +347,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Center(
-                    child: Text(
-                      "Toca para ver en tamaño completo",
-                      style: TextStyle(fontSize: 11, color: Colors.grey.shade500, fontStyle: FontStyle.italic),
-                    ),
-                  ),
                   const SizedBox(height: 8),
-                  if (order.metodoPago == 'transferencia' && !order.pagoConfirmado && order.estado.toLowerCase() == 'pendiente')
-                    Row(
-                      children: [
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: () => _confirmarPago(order.id, true),
-                            icon: const Icon(Icons.check_circle, size: 18),
-                            label: const Text("PAGO CONFIRMADO"),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.green,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 10),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: () => _confirmarPago(order.id, false),
-                            icon: const Icon(Icons.cancel, size: 18),
-                            label: const Text("RECHAZAR PAGO"),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.red,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 10),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
                   if (order.pagoConfirmado)
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -393,6 +362,23 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                           Icon(Icons.check_circle, size: 16, color: Colors.green),
                           SizedBox(width: 6),
                           Text("Pago confirmado", style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 13)),
+                        ],
+                      ),
+                    ),
+                  if (!order.pagoConfirmado && order.estado.toLowerCase() != 'cancelado' && order.estado.toLowerCase() != 'entregado')
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.orange),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.warning_amber_rounded, size: 16, color: Colors.orange),
+                          SizedBox(width: 6),
+                          Text("Pago pendiente", style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold, fontSize: 13)),
                         ],
                       ),
                     ),
@@ -423,65 +409,114 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                 // Acciones de Gestión de Estado
                 const Text("Acciones de Administración:", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                 const SizedBox(height: 10),
+
+                // Banner de advertencia cuando el pago no está confirmado
+                if (!order.pagoConfirmado && order.estado.toLowerCase() != 'cancelado' && order.estado.toLowerCase() != 'entregado')
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    margin: const EdgeInsets.only(bottom: 10),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.orange),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 20),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            "Debes confirmar el pago del pedido antes de poder avanzar su estado.",
+                            style: TextStyle(color: Colors.orange.shade800, fontSize: 12, fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                // Botón grande de confirmar pago cuando no está confirmado
+                if (!order.pagoConfirmado && order.estado.toLowerCase() != 'cancelado' && order.estado.toLowerCase() != 'entregado')
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () => _showPagoModal(order),
+                      icon: const Icon(Icons.payments, size: 20),
+                      label: const Text("CONFIRMAR PAGO", style: TextStyle(fontWeight: FontWeight.bold)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    ),
+                  ),
+
+                if (!order.pagoConfirmado && order.estado.toLowerCase() != 'cancelado' && order.estado.toLowerCase() != 'entregado')
+                  const SizedBox(height: 10),
+
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    if (order.estado.toLowerCase() == 'pendiente')
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                          child: ElevatedButton(
-                            onPressed: () => _cambiarEstado(order.id, 'preparado'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.blue,
-                              padding: const EdgeInsets.symmetric(vertical: 10),
+                    // Solo mostrar botones de avance si el pago está confirmado
+                    if (order.pagoConfirmado) ...[
+                      if (order.estado.toLowerCase() == 'pendiente')
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                            child: ElevatedButton(
+                              onPressed: () => _cambiarEstado(order.id, 'preparado'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.blue,
+                                padding: const EdgeInsets.symmetric(vertical: 10),
+                              ),
+                              child: const Text("PREPARADO", style: TextStyle(fontSize: 12)),
                             ),
-                            child: const Text("PREPARADO", style: TextStyle(fontSize: 12)),
                           ),
                         ),
-                      ),
-                    if (order.estado.toLowerCase() == 'preparado')
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                          child: ElevatedButton(
-                            onPressed: () => _cambiarEstado(order.id, 'procesando'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.teal,
-                              padding: const EdgeInsets.symmetric(vertical: 10),
+                      if (order.estado.toLowerCase() == 'preparado')
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                            child: ElevatedButton(
+                              onPressed: () => _cambiarEstado(order.id, 'procesando'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.teal,
+                                padding: const EdgeInsets.symmetric(vertical: 10),
+                              ),
+                              child: const Text("PROCESANDO", style: TextStyle(fontSize: 12)),
                             ),
-                            child: const Text("PROCESANDO", style: TextStyle(fontSize: 12)),
                           ),
                         ),
-                      ),
-                    if (order.estado.toLowerCase() == 'procesando')
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                          child: ElevatedButton(
-                            onPressed: () => _mostrarModalEnvio(order.id),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.purple,
-                              padding: const EdgeInsets.symmetric(vertical: 10),
+                      if (order.estado.toLowerCase() == 'procesando')
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                            child: ElevatedButton(
+                              onPressed: () => _mostrarModalEnvio(order.id),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.purple,
+                                padding: const EdgeInsets.symmetric(vertical: 10),
+                              ),
+                              child: const Text("ENVIADO", style: TextStyle(fontSize: 12)),
                             ),
-                            child: const Text("ENVIADO", style: TextStyle(fontSize: 12)),
                           ),
                         ),
-                      ),
-                    if (order.estado.toLowerCase() == 'enviado')
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                          child: ElevatedButton(
-                            onPressed: () => _cambiarEstado(order.id, 'entregado'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.green,
-                              padding: const EdgeInsets.symmetric(vertical: 10),
+                      if (order.estado.toLowerCase() == 'enviado')
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                            child: ElevatedButton(
+                              onPressed: () => _cambiarEstado(order.id, 'entregado'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.green,
+                                padding: const EdgeInsets.symmetric(vertical: 10),
+                              ),
+                              child: const Text("ENTREGADO", style: TextStyle(fontSize: 12)),
                             ),
-                            child: const Text("ENTREGADO", style: TextStyle(fontSize: 12)),
                           ),
                         ),
-                      ),
+                    ],
                     if (order.estado.toLowerCase() != 'entregado' && order.estado.toLowerCase() != 'cancelado')
                       Expanded(
                         child: Padding(
@@ -804,7 +839,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
         ),
         content: Text(
           confirmado
-              ? "¿Estás seguro de confirmar el pago de este pedido? El pedido pasará a estado PREPARADO."
+              ? "¿Estás seguro de confirmar el pago de este pedido? Podrás avanzar su estado una vez confirmado."
               : "¿Estás seguro de rechazar el pago de este pedido? El pedido será CANCELADO.",
         ),
         actions: [
@@ -845,7 +880,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(success
-                ? (confirmado ? "Pago confirmado exitosamente." : "Pago rechazado. Pedido cancelado.")
+                ? (confirmado ? "Pago confirmado. Ahora puedes avanzar el estado del pedido." : "Pago rechazado.")
                 : "Error al procesar la acción."),
             backgroundColor: success ? Colors.green : Colors.red,
             behavior: SnackBarBehavior.floating,
@@ -1075,44 +1110,56 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                   ),
 
                   // Action buttons
-                  if (!order.pagoConfirmado && order.comprobanteUrl != null && order.comprobanteUrl!.isNotEmpty && order.estado.toLowerCase() != 'cancelado' && order.estado.toLowerCase() != 'entregado')
+                  if (!order.pagoConfirmado && order.estado.toLowerCase() != 'cancelado' && order.estado.toLowerCase() != 'entregado')
                     Container(
                       padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
                       decoration: BoxDecoration(
                         border: Border(top: BorderSide(color: Colors.grey.shade200)),
                       ),
-                      child: Row(
+                      child: Column(
                         children: [
-                          Expanded(
-                            child: ElevatedButton.icon(
-                              onPressed: () {
-                                Navigator.pop(ctx);
-                                _confirmarPago(order.id, true);
-                              },
-                              icon: const Icon(Icons.check_circle, size: 18),
-                              label: const Text("CONFIRMAR"),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.green,
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 12),
+                          if (order.metodoPago == 'transferencia' && (order.comprobanteUrl == null || order.comprobanteUrl!.isEmpty))
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: Text(
+                                "Esperando comprobante de pago del cliente...",
+                                style: TextStyle(color: Colors.grey.shade600, fontSize: 12, fontStyle: FontStyle.italic),
                               ),
                             ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: ElevatedButton.icon(
-                              onPressed: () {
-                                Navigator.pop(ctx);
-                                _confirmarPago(order.id, false);
-                              },
-                              icon: const Icon(Icons.cancel, size: 18),
-                              label: const Text("RECHAZAR"),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.red,
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 12),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: ElevatedButton.icon(
+                                  onPressed: () {
+                                    Navigator.pop(ctx);
+                                    _confirmarPago(order.id, true);
+                                  },
+                                  icon: const Icon(Icons.check_circle, size: 18),
+                                  label: const Text("CONFIRMAR"),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.green,
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                  ),
+                                ),
                               ),
-                            ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: ElevatedButton.icon(
+                                  onPressed: () {
+                                    Navigator.pop(ctx);
+                                    _confirmarPago(order.id, false);
+                                  },
+                                  icon: const Icon(Icons.cancel, size: 18),
+                                  label: const Text("RECHAZAR"),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.red,
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -1159,6 +1206,38 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
       child: Text(
         estado.toUpperCase(),
         style: TextStyle(color: chipColor, fontSize: 10, fontWeight: FontWeight.bold),
+      ),
+    );
+  }
+
+  Widget _buildPagoBadge(OrderModel order) {
+    if (order.estado.toLowerCase() == 'cancelado') return const SizedBox.shrink();
+    final isConfirmed = order.pagoConfirmado;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+      decoration: BoxDecoration(
+        color: isConfirmed ? Colors.green.withOpacity(0.15) : Colors.orange.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: isConfirmed ? Colors.green : Colors.orange, width: 1),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            isConfirmed ? Icons.check_circle : Icons.warning_amber_rounded,
+            color: isConfirmed ? Colors.green : Colors.orange,
+            size: 10,
+          ),
+          const SizedBox(width: 3),
+          Text(
+            isConfirmed ? 'PAGO OK' : 'PAGO PENDIENTE',
+            style: TextStyle(
+              color: isConfirmed ? Colors.green : Colors.orange,
+              fontSize: 8,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
       ),
     );
   }

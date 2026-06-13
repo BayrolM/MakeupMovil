@@ -500,38 +500,25 @@ class PedidoProvider with ChangeNotifier {
     }
   }
 
-  /// Confirmar o rechazar pago (Admin)
+  /// Confirmar o rechazar pago (Admin) — solo cambia el flag pago_confirmado
   Future<bool> confirmarPago({
     required String token,
     required String idPedido,
     required bool confirmado,
   }) async {
     try {
-      final headers = {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      };
-
-      // 1. Marcar pago confirmado/rechazado en el backend
-      await http.put(
+      final response = await http.put(
         Uri.parse('$_baseUrl/orders/$idPedido/pago'),
-        headers: headers,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
         body: json.encode({
           'pago_confirmado': confirmado,
         }),
       );
 
-      // 2. Cambiar estado del pedido
-      final statusRes = await http.put(
-        Uri.parse('$_baseUrl/orders/$idPedido/status'),
-        headers: headers,
-        body: json.encode({
-          'estado': confirmado ? 'preparado' : 'cancelado',
-          'motivo': confirmado ? 'Pago confirmado por administrador' : 'Pago no verificado',
-        }),
-      );
-
-      if (statusRes.statusCode == 200) {
+      if (response.statusCode == 200) {
         final index = _pedidos.indexWhere((p) => p.id == idPedido);
         if (index != -1) {
           final old = _pedidos[index];
@@ -542,7 +529,7 @@ class PedidoProvider with ChangeNotifier {
             ciudad: old.ciudad,
             departamento: old.departamento,
             total: old.total,
-            estado: confirmado ? 'preparado' : 'cancelado',
+            estado: old.estado,
             metodoPago: old.metodoPago,
             pagoConfirmado: confirmado,
             comprobanteUrl: old.comprobanteUrl,

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -24,6 +25,7 @@ class _ClienteHomeScreenState extends State<ClienteHomeScreen> with SingleTicker
   int _currentIndex = 0;
   String _searchQuery = '';
   String? _selectedCategoryId;
+  Timer? _autoRefreshTimer;
 
   final _searchController = TextEditingController();
   final GlobalKey _cartIconKey = GlobalKey();
@@ -83,6 +85,7 @@ class _ClienteHomeScreenState extends State<ClienteHomeScreen> with SingleTicker
 
   @override
   void dispose() {
+    _autoRefreshTimer?.cancel();
     _navAnimController?.dispose();
     _searchController.dispose();
     super.dispose();
@@ -106,12 +109,31 @@ class _ClienteHomeScreenState extends State<ClienteHomeScreen> with SingleTicker
     if (index == 1) {
       final productProv = Provider.of<ProductoProvider>(context, listen: false);
       productProv.cargarProductos(search: _searchQuery, categoryId: _selectedCategoryId);
+      _stopAutoRefresh();
     } else if (index == 2) {
       final authProv = Provider.of<AuthProvider>(context, listen: false);
       if (authProv.isLoggedIn) {
         Provider.of<PedidoProvider>(context, listen: false).cargarPedidosCliente(authProv.token!);
+        _startAutoRefresh();
       }
+    } else {
+      _stopAutoRefresh();
     }
+  }
+
+  void _startAutoRefresh() {
+    _autoRefreshTimer?.cancel();
+    _autoRefreshTimer = Timer.periodic(const Duration(seconds: 15), (_) {
+      final authProv = Provider.of<AuthProvider>(context, listen: false);
+      if (authProv.isLoggedIn) {
+        Provider.of<PedidoProvider>(context, listen: false).cargarPedidosCliente(authProv.token!);
+      }
+    });
+  }
+
+  void _stopAutoRefresh() {
+    _autoRefreshTimer?.cancel();
+    _autoRefreshTimer = null;
   }
 
   void _cerrarSesion() async {
@@ -1347,7 +1369,16 @@ class _ClienteHomeScreenState extends State<ClienteHomeScreen> with SingleTicker
       );
     }
 
-    return ListView.builder(
+    return RefreshIndicator(
+      key: const ValueKey('orders-refresh'),
+      color: AppTheme.deepRose,
+      onRefresh: () async {
+        final authProv = Provider.of<AuthProvider>(context, listen: false);
+        if (authProv.isLoggedIn) {
+          await Provider.of<PedidoProvider>(context, listen: false).cargarPedidosCliente(authProv.token!);
+        }
+      },
+      child: ListView.builder(
       key: const ValueKey('orders-list'),
       padding: const EdgeInsets.all(16.0),
       itemCount: pedidoProv.pedidos.length,
@@ -1458,13 +1489,18 @@ class _ClienteHomeScreenState extends State<ClienteHomeScreen> with SingleTicker
                       SizedBox(
                         width: double.infinity,
                         child: OutlinedButton.icon(
-                          onPressed: () {
-                            Navigator.push(
+                          onPressed: () async {
+                            await Navigator.push(
                               context,
                               MaterialPageRoute(
                                 builder: (_) => DevolucionSolicitudScreen(pedido: order),
                               ),
                             );
+                            if (!mounted) return;
+                            final authProv = Provider.of<AuthProvider>(context, listen: false);
+                            if (authProv.isLoggedIn) {
+                              Provider.of<PedidoProvider>(context, listen: false).cargarPedidosCliente(authProv.token!);
+                            }
                           },
                           icon: const Icon(Icons.replay_outlined, size: 18),
                           label: const Text('Solicitar Devolución', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -1484,6 +1520,7 @@ class _ClienteHomeScreenState extends State<ClienteHomeScreen> with SingleTicker
           ),
         );
       },
+    ),
     );
   }
 
@@ -1572,8 +1609,6 @@ class _ClienteHomeScreenState extends State<ClienteHomeScreen> with SingleTicker
   Widget _buildDevolucionDetail(Map<String, dynamic> info) {
     final estado = info['estado'] ?? 'pendiente';
     final motivo = info['motivo'] ?? '';
-    final motivoDecision = info['motivo_decision'];
-    final totalDevuelto = double.tryParse(info['total_devuelto']?.toString() ?? '') ?? 0.0;
 
     Color estadoColor;
     String estadoLabel;
