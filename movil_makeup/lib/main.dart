@@ -6,6 +6,7 @@ import 'providers/carrito_provider.dart';
 import 'providers/producto_provider.dart';
 import 'providers/pedido_provider.dart';
 import 'providers/auth_provider.dart';
+import 'providers/devolucion_provider.dart';
 import 'screens/client/cliente_home_screen.dart';
 import 'screens/admin/admin_home_screen.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -37,6 +38,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => CarritoProvider()),
         ChangeNotifierProvider(create: (_) => ProductoProvider()),
         ChangeNotifierProvider(create: (_) => PedidoProvider()),
+        ChangeNotifierProvider(create: (_) => DevolucionProvider()),
       ],
       child: Consumer<AuthProvider>(
         builder: (context, auth, _) {

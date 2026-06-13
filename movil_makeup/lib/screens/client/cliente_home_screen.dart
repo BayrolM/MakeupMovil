@@ -11,6 +11,7 @@ import '../../config/routes.dart';
 import '../../utils/image_helper.dart';
 import '../../widgets/banner_carousel.dart';
 import '../../utils/pdf_generator.dart';
+import 'devolucion_solicitud_screen.dart';
 
 class ClienteHomeScreen extends StatefulWidget {
   const ClienteHomeScreen({super.key});
@@ -1361,7 +1362,17 @@ class _ClienteHomeScreenState extends State<ClienteHomeScreen> with SingleTicker
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                _buildStatusChip(order),
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    _buildStatusChip(order),
+                    if (order.estadoDevolucion != null) ...[
+                      const SizedBox(height: 3),
+                      _buildDevolucionBadge(order.estadoDevolucion!),
+                    ],
+                  ],
+                ),
                 const SizedBox(width: 4),
                 IconButton(
                   icon: const Icon(Icons.picture_as_pdf, size: 20, color: Colors.red),
@@ -1434,6 +1445,38 @@ class _ClienteHomeScreenState extends State<ClienteHomeScreen> with SingleTicker
                             ],
                           ),
                         )),
+
+                    // ── Sección de Devolución ──────────────
+                    if (order.devolucionInfo != null) ...[
+                      const SizedBox(height: 12),
+                      _buildDevolucionDetail(order.devolucionInfo!),
+                    ],
+
+                    // ── Botón Solicitar Devolución ─────────
+                    if (order.estado.toLowerCase() == 'entregado' && order.estadoDevolucion == null) ...[
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => DevolucionSolicitudScreen(pedido: order),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.replay_outlined, size: 18),
+                          label: const Text('Solicitar Devolución', style: TextStyle(fontWeight: FontWeight.bold)),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppTheme.deepRose,
+                            side: const BorderSide(color: AppTheme.deepRose, width: 1.5),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -1485,6 +1528,107 @@ class _ClienteHomeScreenState extends State<ClienteHomeScreen> with SingleTicker
       child: Text(
         label,
         style: TextStyle(color: chipColor, fontSize: 10, fontWeight: FontWeight.bold),
+      ),
+    );
+  }
+
+  Widget _buildDevolucionBadge(String estado) {
+    Color chipColor;
+    String label;
+
+    switch (estado) {
+      case 'pendiente':
+        chipColor = Colors.orange;
+        label = 'DEVOLUCIÓN';
+        break;
+      case 'en_revision':
+        chipColor = Colors.amber;
+        label = 'EN REVISIÓN';
+        break;
+      case 'aprobada':
+        chipColor = Colors.green;
+        label = 'DEVOLUCIÓN ACEPTADA';
+        break;
+      case 'rechazada':
+        chipColor = Colors.red;
+        label = 'DEVOLUCIÓN RECHAZADA';
+        break;
+      default:
+        chipColor = Colors.grey;
+        label = 'DEVOLUCIÓN';
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: chipColor.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: chipColor, width: 1),
+      ),
+      child: Text(label, style: TextStyle(color: chipColor, fontSize: 8, fontWeight: FontWeight.bold)),
+    );
+  }
+
+  Widget _buildDevolucionDetail(Map<String, dynamic> info) {
+    final estado = info['estado'] ?? 'pendiente';
+    final motivo = info['motivo'] ?? '';
+    final motivoDecision = info['motivo_decision'];
+    final totalDevuelto = double.tryParse(info['total_devuelto']?.toString() ?? '') ?? 0.0;
+
+    Color estadoColor;
+    String estadoLabel;
+
+    switch (estado) {
+      case 'pendiente':
+        estadoColor = Colors.orange;
+        estadoLabel = 'Pendiente';
+        break;
+      case 'en_revision':
+        estadoColor = Colors.amber;
+        estadoLabel = 'En Revisión';
+        break;
+      case 'aprobada':
+        estadoColor = Colors.green;
+        estadoLabel = 'Aprobada';
+        break;
+      case 'rechazada':
+        estadoColor = Colors.red;
+        estadoLabel = 'Rechazada';
+        break;
+      default:
+        estadoColor = Colors.grey;
+        estadoLabel = estado;
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.replay_outlined, size: 16, color: AppTheme.deepRose),
+              const SizedBox(width: 6),
+              const Text('Devolución', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: estadoColor.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(estadoLabel, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: estadoColor)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text('Motivo: $motivo', style: TextStyle(fontSize: 12, color: Colors.grey.shade700)),
+        ],
       ),
     );
   }

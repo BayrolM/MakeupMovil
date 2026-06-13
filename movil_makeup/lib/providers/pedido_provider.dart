@@ -47,6 +47,8 @@ class OrderModel {
   final String? trackingLink;
   final String? fechaEnvio;
   final String? fechaEstimada;
+  final String? estadoDevolucion;
+  final Map<String, dynamic>? devolucionInfo;
   final List<OrderItemModel> items;
 
   OrderModel({
@@ -67,6 +69,8 @@ class OrderModel {
     this.trackingLink,
     this.fechaEnvio,
     this.fechaEstimada,
+    this.estadoDevolucion,
+    this.devolucionInfo,
     required this.items,
   });
 
@@ -92,6 +96,8 @@ class OrderModel {
       trackingLink: json['tracking_link'],
       fechaEnvio: json['fecha_envio'],
       fechaEstimada: json['fecha_estimada'],
+      estadoDevolucion: json['estado_devolucion'],
+      devolucionInfo: json['devolucion_info'] is Map ? json['devolucion_info'] : null,
       items: parsedItems,
     );
   }
@@ -406,7 +412,34 @@ class PedidoProvider with ChangeNotifier {
           // Reemplazar o actualizar en la lista de pedidos local
           final index = _pedidos.indexWhere((p) => p.id == idPedido);
           if (index != -1) {
-            _pedidos[index] = updatedOrder;
+            final existing = _pedidos[index];
+            // Preservar campos que el detalle no trae (backend bug: GET /:id no incluye pago_confirmado y comprobante_url para clientes)
+            _pedidos[index] = OrderModel(
+              id: updatedOrder.id,
+              fecha: updatedOrder.fecha,
+              direccion: updatedOrder.direccion,
+              ciudad: updatedOrder.ciudad,
+              departamento: updatedOrder.departamento,
+              total: updatedOrder.total,
+              estado: updatedOrder.estado,
+              metodoPago: updatedOrder.metodoPago,
+              pagoConfirmado: rawOrder['pago_confirmado'] != null
+                  ? (rawOrder['pago_confirmado'] == true || rawOrder['pago_confirmado'] == 1)
+                  : existing.pagoConfirmado,
+              comprobanteUrl: (rawOrder['comprobante_url'] != null && rawOrder['comprobante_url'].toString().isNotEmpty)
+                  ? rawOrder['comprobante_url']
+                  : existing.comprobanteUrl,
+              clienteNombre: updatedOrder.clienteNombre ?? existing.clienteNombre,
+              clienteEmail: updatedOrder.clienteEmail ?? existing.clienteEmail,
+              transportadora: updatedOrder.transportadora ?? existing.transportadora,
+              numeroGuia: updatedOrder.numeroGuia ?? existing.numeroGuia,
+              trackingLink: updatedOrder.trackingLink ?? existing.trackingLink,
+              fechaEnvio: updatedOrder.fechaEnvio ?? existing.fechaEnvio,
+              fechaEstimada: updatedOrder.fechaEstimada ?? existing.fechaEstimada,
+              estadoDevolucion: updatedOrder.estadoDevolucion ?? existing.estadoDevolucion,
+              devolucionInfo: updatedOrder.devolucionInfo ?? existing.devolucionInfo,
+              items: updatedOrder.items.isNotEmpty ? updatedOrder.items : existing.items,
+            );
             notifyListeners();
           }
         }
