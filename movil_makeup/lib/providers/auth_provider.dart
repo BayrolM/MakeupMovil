@@ -411,4 +411,74 @@ class AuthProvider with ChangeNotifier {
       return 'Error de conexión';
     }
   }
+
+  // ── Recuperación de contraseña (sin autenticación) ─────────
+
+  /// Verificar si un email está registrado
+  Future<bool> checkEmailExists(String email) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$_baseUrl/auth/check-email'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'email': email}),
+      );
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return data['registered'] == true;
+      }
+      return false;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /// Enviar código de recuperación de contraseña
+  Future<String?> forgotPassword(String email) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$_baseUrl/auth/forgot-password'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'email': email}),
+      );
+      final data = json.decode(response.body);
+      if (response.statusCode == 200) return null;
+      return data['message'] ?? 'Error al enviar el código';
+    } catch (e) {
+      return 'Error de conexión';
+    }
+  }
+
+  /// Verificar código de recuperación
+  Future<bool> verifyResetCode(String email, String code) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$_baseUrl/auth/verify-reset-code'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'email': email, 'code': code}),
+      );
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return data['ok'] == true;
+      }
+      return false;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /// Restablecer contraseña con código verificado
+  Future<String?> resetPassword(String token, String newPassword) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$_baseUrl/auth/reset-password'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'token': token, 'new_password': newPassword}),
+      );
+      final data = json.decode(response.body);
+      if (response.statusCode == 200) return null;
+      return data['message'] ?? 'Error al restablecer la contraseña';
+    } catch (e) {
+      return 'Error de conexión';
+    }
+  }
 }

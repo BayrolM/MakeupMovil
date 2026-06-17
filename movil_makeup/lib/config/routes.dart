@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../screens/auth/login_screen.dart';
 import '../screens/auth/register_screen.dart';
+import '../screens/auth/forgot_password_screen.dart';
 import '../screens/client/cliente_home_screen.dart';
 import '../screens/client/cliente_checkout_screen.dart';
 import '../screens/client/cliente_pago_screen.dart';
@@ -13,6 +14,7 @@ import '../screens/profile_screen.dart';
 class AppRoutes {
   static const String login = '/login';
   static const String register = '/register';
+  static const String forgotPassword = '/forgot-password';
   static const String clientHome = '/client-home';
   static const String clienteCheckout = '/client-checkout';
   static const String clientePago = '/client-pago';
@@ -32,6 +34,7 @@ class AppRoutes {
     return {
       login: (context) => const LoginScreen(),
       register: (context) => const RegisterScreen(),
+      forgotPassword: (context) => const ForgotPasswordScreen(),
       clientHome: (context) => const ClienteHomeScreen(),
       clienteCheckout: (context) => const ClienteCheckoutScreen(),
       clientePago: (context) => const ClientePagoScreen(),

@@ -204,7 +204,16 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 30),
+                            const SizedBox(height: 8),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: TextButton(
+                                onPressed: () => Navigator.pushNamed(context, AppRoutes.forgotPassword),
+                                style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: Size.zero, tapTargetSize: MaterialTapTargetSize.shrinkWrap),
+                                child: const Text('¿Olvidaste tu contraseña?', style: TextStyle(color: AppTheme.deepRose, fontSize: 13, fontWeight: FontWeight.w600)),
+                              ),
+                            ),
+                            const SizedBox(height: 22),
                             isLoading
                                 ? const Center(
                                     child: CircularProgressIndicator(
