@@ -1427,6 +1427,8 @@ class _ClienteHomeScreenState extends State<ClienteHomeScreen> with SingleTicker
                         Text("Fecha envío: ${_formatDate(order.fechaEnvio!)}", style: const TextStyle(fontSize: 13)),
                       if (order.fechaEstimada != null && order.fechaEstimada!.isNotEmpty)
                         Text("Llegada estimada: ${_formatDate(order.fechaEstimada!)}", style: const TextStyle(fontSize: 13)),
+                      if (order.valorPedido != null && order.valorPedido! > 0)
+                        Text("Valor Pedido: \$${order.valorPedido!.toStringAsFixed(0)}", style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
                     ],
                     if (order.estado.toLowerCase() == 'cancelado' && order.motivoAnulacion != null && order.motivoAnulacion!.isNotEmpty) ...[
                       const SizedBox(height: 10),
@@ -1456,9 +1458,6 @@ class _ClienteHomeScreenState extends State<ClienteHomeScreen> with SingleTicker
                         ),
                       ),
                     ],
-                    const SizedBox(height: 8),
-                    const Text("Método de Pago:", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                    Text(order.metodoPago.toUpperCase()),
                     if (order.estado.toLowerCase() == 'pendiente' && order.comprobanteUrl != null && order.comprobanteUrl!.isNotEmpty && !order.pagoConfirmado) ...[
                       const SizedBox(height: 8),
                       Container(

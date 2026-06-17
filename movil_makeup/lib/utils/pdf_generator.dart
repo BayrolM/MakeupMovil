@@ -388,6 +388,14 @@ class PdfGenerator {
                 pw.Expanded(child: _trackingField('Llegada estimada', order.fechaEstimada!)),
             ],
           ),
+          if (order.valorPedido != null && order.valorPedido! > 0) ...[
+            pw.SizedBox(height: 6),
+            pw.Row(
+              children: [
+                pw.Expanded(child: _trackingField('Valor Pedido', '\$${order.valorPedido!.toStringAsFixed(0)}')),
+              ],
+            ),
+          ],
         ],
       ),
     );

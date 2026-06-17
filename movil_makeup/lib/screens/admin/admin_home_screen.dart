@@ -305,6 +305,8 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                     Text("Fecha envío: ${_formatDate(order.fechaEnvio!)}", style: const TextStyle(fontSize: 13)),
                   if (order.fechaEstimada != null && order.fechaEstimada!.isNotEmpty)
                     Text("Llegada estimada: ${_formatDate(order.fechaEstimada!)}", style: const TextStyle(fontSize: 13)),
+                  if (order.valorPedido != null && order.valorPedido! > 0)
+                    Text("Valor Pedido: \$${order.valorPedido!.toStringAsFixed(0)}", style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
                 ],
                 if (order.estado.toLowerCase() == 'cancelado' && order.motivoAnulacion != null && order.motivoAnulacion!.isNotEmpty) ...[
                   const SizedBox(height: 10),
@@ -616,6 +618,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
   void _mostrarModalEnvio(String idPedido) {
     final numeroGuiaCtrl = TextEditingController();
     final diasEstimadosCtrl = TextEditingController();
+    final valorPedidoCtrl = TextEditingController();
     DateTime fechaEnvio = DateTime.now();
 
     final transportadoras = [
@@ -633,6 +636,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
     String? errorTransportadora;
     String? errorNumeroGuia;
     String? errorDias;
+    String? errorValorPedido;
 
     void validateTransportadora(String? val) {
       transportadoraSeleccionada = val;
@@ -660,6 +664,15 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
         errorDias = 'Máximo 20 caracteres';
       } else {
         errorDias = null;
+      }
+    }
+
+    void validateValorPedido(String val) {
+      final v = val.trim();
+      if (v.isEmpty) {
+        errorValorPedido = 'El valor del pedido es obligatorio';
+      } else {
+        errorValorPedido = null;
       }
     }
 
@@ -781,6 +794,26 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                     ),
                     const SizedBox(height: 20),
 
+                    // Valor del Pedido
+                    TextField(
+                      controller: valorPedidoCtrl,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                      ],
+                      onChanged: (val) {
+                        setModalState(() => validateValorPedido(val));
+                      },
+                      decoration: InputDecoration(
+                        labelText: "Valor del Pedido *",
+                        prefixText: "\$ ",
+                        hintText: "50000",
+                        border: const OutlineInputBorder(),
+                        errorText: errorValorPedido,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
                     // Botón confirmar
                     SizedBox(
                       width: double.infinity,
@@ -792,11 +825,13 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                                   validateTransportadora(transportadoraSeleccionada);
                                   validateNumeroGuia(numeroGuiaCtrl.text);
                                   validateDias(diasEstimadosCtrl.text);
+                                  validateValorPedido(valorPedidoCtrl.text);
                                 });
 
                                 if (errorTransportadora != null ||
                                     errorNumeroGuia != null ||
-                                    errorDias != null) {
+                                    errorDias != null ||
+                                    errorValorPedido != null) {
                                   return;
                                 }
 
@@ -815,6 +850,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                                   'tracking_link': '',
                                   'fecha_envio': fechaEnvioStr,
                                   'fecha_estimada': fechaEstimadaStr,
+                                  'valor_pedido': valorPedidoCtrl.text,
                                 });
                               },
                         style: ElevatedButton.styleFrom(

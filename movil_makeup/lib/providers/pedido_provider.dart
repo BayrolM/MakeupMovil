@@ -47,6 +47,7 @@ class OrderModel {
   final String? trackingLink;
   final String? fechaEnvio;
   final String? fechaEstimada;
+  final double? valorPedido;
   final String? estadoDevolucion;
   final Map<String, dynamic>? devolucionInfo;
   final String? motivoAnulacion;
@@ -70,6 +71,7 @@ class OrderModel {
     this.trackingLink,
     this.fechaEnvio,
     this.fechaEstimada,
+    this.valorPedido,
     this.estadoDevolucion,
     this.devolucionInfo,
     this.motivoAnulacion,
@@ -98,6 +100,7 @@ class OrderModel {
       trackingLink: json['tracking_link'],
       fechaEnvio: json['fecha_envio'],
       fechaEstimada: json['fecha_estimada'],
+      valorPedido: double.tryParse(json['valor_pedido']?.toString() ?? '') ?? 0.0,
       estadoDevolucion: json['estado_devolucion'],
       devolucionInfo: json['devolucion_info'] is Map ? json['devolucion_info'] : null,
       motivoAnulacion: json['motivo_anulacion'],
@@ -212,6 +215,7 @@ class PedidoProvider with ChangeNotifier {
             trackingLink: pedido.trackingLink ?? existing.trackingLink,
             fechaEnvio: pedido.fechaEnvio ?? existing.fechaEnvio,
             fechaEstimada: pedido.fechaEstimada ?? existing.fechaEstimada,
+            valorPedido: pedido.valorPedido != null && pedido.valorPedido! > 0 ? pedido.valorPedido : existing.valorPedido,
             estadoDevolucion: pedido.estadoDevolucion ?? existing.estadoDevolucion,
             devolucionInfo: pedido.devolucionInfo ?? existing.devolucionInfo,
             motivoAnulacion: pedido.motivoAnulacion ?? existing.motivoAnulacion,
@@ -273,6 +277,7 @@ class PedidoProvider with ChangeNotifier {
             trackingLink: pedido.trackingLink ?? existing.trackingLink,
             fechaEnvio: pedido.fechaEnvio ?? existing.fechaEnvio,
             fechaEstimada: pedido.fechaEstimada ?? existing.fechaEstimada,
+            valorPedido: pedido.valorPedido != null && pedido.valorPedido! > 0 ? pedido.valorPedido : existing.valorPedido,
             estadoDevolucion: pedido.estadoDevolucion ?? existing.estadoDevolucion,
             devolucionInfo: pedido.devolucionInfo ?? existing.devolucionInfo,
             motivoAnulacion: pedido.motivoAnulacion ?? existing.motivoAnulacion,
@@ -342,6 +347,9 @@ class PedidoProvider with ChangeNotifier {
             trackingLink: shippingData?['tracking_link'] ?? old.trackingLink,
             fechaEnvio: shippingData?['fecha_envio'] ?? old.fechaEnvio,
             fechaEstimada: shippingData?['fecha_estimada'] ?? old.fechaEstimada,
+            valorPedido: shippingData?['valor_pedido'] != null
+                ? double.tryParse(shippingData!['valor_pedido'].toString()) ?? old.valorPedido
+                : old.valorPedido,
             motivoAnulacion: old.motivoAnulacion,
             items: old.items,
           );
@@ -450,6 +458,7 @@ class PedidoProvider with ChangeNotifier {
               trackingLink: updatedOrder.trackingLink ?? existing.trackingLink,
               fechaEnvio: updatedOrder.fechaEnvio ?? existing.fechaEnvio,
               fechaEstimada: updatedOrder.fechaEstimada ?? existing.fechaEstimada,
+              valorPedido: updatedOrder.valorPedido != null && updatedOrder.valorPedido! > 0 ? updatedOrder.valorPedido : existing.valorPedido,
               estadoDevolucion: updatedOrder.estadoDevolucion ?? existing.estadoDevolucion,
               devolucionInfo: updatedOrder.devolucionInfo ?? existing.devolucionInfo,
               motivoAnulacion: updatedOrder.motivoAnulacion ?? existing.motivoAnulacion,
