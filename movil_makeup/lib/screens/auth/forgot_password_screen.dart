@@ -216,7 +216,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             children: [
               const SizedBox(height: 20),
               Center(
-                child: Image.asset('images/logo_glamour.png', height: 80, errorBuilder: (_, __, ___) => const Icon(Icons.lock_reset, size: 60, color: AppTheme.deepRose)),
+                child: Image.asset('assets/images/logo_glamour.png', height: 80, errorBuilder: (_, __, ___) => const Icon(Icons.lock_reset, size: 60, color: AppTheme.deepRose)),
               ),
               const SizedBox(height: 24),
               if (_flowState == 'email') _buildEmailStep(),

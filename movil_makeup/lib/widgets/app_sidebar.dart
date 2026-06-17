@@ -41,7 +41,7 @@ class _AppSidebarState extends State<AppSidebar> {
                 ClipRRect(
                   borderRadius: BorderRadius.circular(16),
                   child: Image.asset(
-                    'images/logo_glamour.png',
+                    'assets/images/logo_glamour.png',
                     width: 64,
                     height: 64,
                     fit: BoxFit.cover,

@@ -484,7 +484,7 @@ class _ClienteHomeScreenState extends State<ClienteHomeScreen> with SingleTicker
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: Image.asset(
-                'images/logo_glamour.png',
+                'assets/images/logo_glamour.png',
                 width: 32,
                 height: 32,
                 fit: BoxFit.cover,
@@ -894,7 +894,7 @@ class _ClienteHomeScreenState extends State<ClienteHomeScreen> with SingleTicker
                   children: [
                     ClipRRect(
                       borderRadius: BorderRadius.circular(8),
-                      child: Image.asset('images/logo_glamour.png', width: 28, height: 28, fit: BoxFit.cover,
+                      child: Image.asset('assets/images/logo_glamour.png', width: 28, height: 28, fit: BoxFit.cover,
                         errorBuilder: (_, __, ___) => const Icon(Icons.auto_awesome, color: AppTheme.deepRose, size: 24)),
                     ),
                     const SizedBox(width: 8),
