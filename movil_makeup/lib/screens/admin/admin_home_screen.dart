@@ -306,6 +306,34 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                   if (order.fechaEstimada != null && order.fechaEstimada!.isNotEmpty)
                     Text("Llegada estimada: ${_formatDate(order.fechaEstimada!)}", style: const TextStyle(fontSize: 13)),
                 ],
+                if (order.estado.toLowerCase() == 'cancelado' && order.motivoAnulacion != null && order.motivoAnulacion!.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.red.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.red.withOpacity(0.3)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.cancel_outlined, color: Colors.red, size: 18),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text("Motivo de cancelación:", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.red)),
+                              const SizedBox(height: 2),
+                              Text(order.motivoAnulacion!, style: TextStyle(fontSize: 12, color: Colors.grey.shade700)),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 12),
 
                 // Comprobante de pago (si existe)
@@ -517,12 +545,12 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                           ),
                         ),
                     ],
-                    if (order.estado.toLowerCase() != 'entregado' && order.estado.toLowerCase() != 'cancelado')
+                    if (['pendiente', 'preparado', 'procesando'].contains(order.estado.toLowerCase()))
                       Expanded(
                         child: Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 4.0),
                           child: ElevatedButton(
-                            onPressed: () => _cambiarEstado(order.id, 'cancelado'),
+                            onPressed: () => _showCancelarPedidoDialog(order.id),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.red,
                               padding: const EdgeInsets.symmetric(vertical: 10),
@@ -541,7 +569,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
     );
   }
 
-  void _cambiarEstado(String idPedido, String nuevoEstado, {Map<String, dynamic>? shippingData}) async {
+  void _cambiarEstado(String idPedido, String nuevoEstado, {String? motivo, Map<String, dynamic>? shippingData}) async {
     final authProv = Provider.of<AuthProvider>(context, listen: false);
     final pedidoProv = Provider.of<PedidoProvider>(context, listen: false);
 
@@ -558,6 +586,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
       idPedido: idPedido,
       nuevoEstado: nuevoEstado,
       idEmpleado: empleadoId,
+      motivo: motivo,
       shippingData: shippingData,
     );
 
@@ -939,6 +968,101 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                   ),
                 ),
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showCancelarPedidoDialog(String idPedido) {
+    final motivoController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Row(
+            children: [
+              Icon(Icons.warning_amber_rounded, color: Colors.red, size: 28),
+              SizedBox(width: 8),
+              Text("Cancelar Pedido", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Form(
+              key: formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "¿Estás seguro de cancelar el pedido #$idPedido?",
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.red.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.red.withOpacity(0.3)),
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(Icons.info_outline, color: Colors.red, size: 18),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            "Esta acción devolverá el stock al inventario y es irreversible.",
+                            style: TextStyle(color: Colors.red, fontSize: 12, fontWeight: FontWeight.w500),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text("Motivo de cancelación:", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                  const SizedBox(height: 8),
+                  TextFormField(
+                    controller: motivoController,
+                    maxLines: 3,
+                    maxLength: 200,
+                    decoration: const InputDecoration(
+                      hintText: "Escribe el motivo *",
+                      border: OutlineInputBorder(),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                    ),
+                    validator: (val) {
+                      if (val == null || val.trim().length < 3) {
+                        return 'Escribe al menos 3 caracteres';
+                      }
+                      return null;
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text("CERRAR"),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                if (!formKey.currentState!.validate()) return;
+                final motivo = motivoController.text.trim();
+                Navigator.pop(ctx);
+                _cambiarEstado(idPedido, 'cancelado', motivo: motivo);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text("CANCELAR PEDIDO"),
             ),
           ],
         ),

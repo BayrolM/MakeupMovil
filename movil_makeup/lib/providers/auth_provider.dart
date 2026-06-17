@@ -354,6 +354,24 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
+  /// Verificar si un email ya está registrado
+  Future<bool> checkEmail(String email) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$_baseUrl/auth/check-email'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'email': email}),
+      );
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return data['registered'] == true;
+      }
+      return false;
+    } catch (e) {
+      return false;
+    }
+  }
+
   /// Solicitar código de cambio de contraseña (envía email)
   Future<bool> requestPasswordCode() async {
     if (_token == null) return false;

@@ -8,6 +8,7 @@ import '../../providers/carrito_provider.dart';
 import '../../config/api_config.dart';
 import '../../config/theme.dart';
 import '../../config/routes.dart';
+import '../../data/colombia_data.dart';
 import '../../utils/image_helper.dart';
 
 class ClienteCheckoutScreen extends StatefulWidget {
@@ -19,8 +20,8 @@ class ClienteCheckoutScreen extends StatefulWidget {
 
 class _ClienteCheckoutScreenState extends State<ClienteCheckoutScreen> {
   late TextEditingController _direccionController;
-  late TextEditingController _ciudadController;
-  late TextEditingController _departamentoController;
+  String? _departamentoSeleccionado;
+  String? _ciudadSeleccionada;
   bool _validandoStock = false;
 
   @override
@@ -28,15 +29,19 @@ class _ClienteCheckoutScreenState extends State<ClienteCheckoutScreen> {
     super.initState();
     final profile = Provider.of<AuthProvider>(context, listen: false).userProfile;
     _direccionController = TextEditingController(text: profile?['direccion'] ?? '');
-    _ciudadController = TextEditingController(text: profile?['ciudad'] ?? '');
-    _departamentoController = TextEditingController(text: profile?['departamento'] ?? '');
+    final dept = profile?['departamento'] ?? '';
+    final ciud = profile?['ciudad'] ?? '';
+    _departamentoSeleccionado = dept.isNotEmpty && colombianDepartments.contains(dept) ? dept : null;
+    if (_departamentoSeleccionado != null && ciud.isNotEmpty && mainCities[_departamentoSeleccionado]?.contains(ciud) == true) {
+      _ciudadSeleccionada = ciud;
+    } else {
+      _ciudadSeleccionada = null;
+    }
   }
 
   @override
   void dispose() {
     _direccionController.dispose();
-    _ciudadController.dispose();
-    _departamentoController.dispose();
     super.dispose();
   }
 
@@ -77,8 +82,8 @@ class _ClienteCheckoutScreenState extends State<ClienteCheckoutScreen> {
         AppRoutes.clientePago,
         arguments: {
           'direccion': _direccionController.text.trim(),
-          'ciudad': _ciudadController.text.trim(),
-          'departamento': _departamentoController.text.trim(),
+          'ciudad': _ciudadSeleccionada ?? '',
+          'departamento': _departamentoSeleccionado ?? '',
         },
       );
     } catch (e) {
@@ -197,36 +202,48 @@ class _ClienteCheckoutScreenState extends State<ClienteCheckoutScreen> {
                           Row(
                             children: [
                               Expanded(
-                                child: TextFormField(
-                                  controller: _ciudadController,
-                                  maxLength: 50,
-                                  autovalidateMode: AutovalidateMode.onUserInteraction,
+                                child: DropdownButtonFormField<String>(
+                                  value: _departamentoSeleccionado,
+                                  isExpanded: true,
                                   decoration: const InputDecoration(
-                                    labelText: "Ciudad *",
+                                    labelText: "Departamento *",
                                     counterText: "",
                                     isDense: true,
                                   ),
-                                  validator: (val) {
-                                    if (val == null || val.trim().isEmpty) return 'Requerida';
+                                  items: colombianDepartments.map((d) => DropdownMenuItem(value: d, child: Text(d))).toList(),
+                                  onChanged: (v) {
+                                    setState(() {
+                                      _departamentoSeleccionado = v;
+                                      _ciudadSeleccionada = null;
+                                    });
+                                  },
+                                  validator: (v) {
+                                    if (v == null || v.isEmpty) return 'Requerido';
                                     return null;
                                   },
                                 ),
                               ),
                               const SizedBox(width: 12),
                               Expanded(
-                                child: TextFormField(
-                                  controller: _departamentoController,
-                                  maxLength: 50,
-                                  autovalidateMode: AutovalidateMode.onUserInteraction,
+                                child: DropdownButtonFormField<String>(
+                                  value: _ciudadSeleccionada,
+                                  isExpanded: true,
                                   decoration: const InputDecoration(
-                                    labelText: "Departamento *",
+                                    labelText: "Ciudad *",
                                     counterText: "",
                                     isDense: true,
                                   ),
-                                  validator: (val) {
-                                    if (val == null || val.trim().isEmpty) return 'Requerido';
+                                  items: _departamentoSeleccionado != null && mainCities[_departamentoSeleccionado]!.isNotEmpty
+                                      ? mainCities[_departamentoSeleccionado]!.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList()
+                                      : [],
+                                  onChanged: _departamentoSeleccionado == null
+                                      ? null
+                                      : (v) => setState(() => _ciudadSeleccionada = v),
+                                  validator: (v) {
+                                    if (v == null || v.isEmpty) return 'Requerida';
                                     return null;
                                   },
+                                  disabledHint: const Text('Selecciona depto.'),
                                 ),
                               ),
                             ],
@@ -331,8 +348,8 @@ class _ClienteCheckoutScreenState extends State<ClienteCheckoutScreen> {
                   // Botón pagar
                   ElevatedButton(
                     onPressed: _direccionController.text.trim().isEmpty ||
-                            _ciudadController.text.trim().isEmpty ||
-                            _departamentoController.text.trim().isEmpty ||
+                            _ciudadSeleccionada == null ||
+                            _departamentoSeleccionado == null ||
                             _validandoStock
                         ? null
                         : () => _validarStockYpagar(carritoProv),

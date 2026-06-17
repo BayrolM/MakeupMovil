@@ -49,6 +49,7 @@ class OrderModel {
   final String? fechaEstimada;
   final String? estadoDevolucion;
   final Map<String, dynamic>? devolucionInfo;
+  final String? motivoAnulacion;
   final List<OrderItemModel> items;
 
   OrderModel({
@@ -71,6 +72,7 @@ class OrderModel {
     this.fechaEstimada,
     this.estadoDevolucion,
     this.devolucionInfo,
+    this.motivoAnulacion,
     required this.items,
   });
 
@@ -98,6 +100,7 @@ class OrderModel {
       fechaEstimada: json['fecha_estimada'],
       estadoDevolucion: json['estado_devolucion'],
       devolucionInfo: json['devolucion_info'] is Map ? json['devolucion_info'] : null,
+      motivoAnulacion: json['motivo_anulacion'],
       items: parsedItems,
     );
   }
@@ -211,6 +214,7 @@ class PedidoProvider with ChangeNotifier {
             fechaEstimada: pedido.fechaEstimada ?? existing.fechaEstimada,
             estadoDevolucion: pedido.estadoDevolucion ?? existing.estadoDevolucion,
             devolucionInfo: pedido.devolucionInfo ?? existing.devolucionInfo,
+            motivoAnulacion: pedido.motivoAnulacion ?? existing.motivoAnulacion,
             items: existing.items.isNotEmpty ? existing.items : pedido.items,
           );
         }).toList();
@@ -271,6 +275,7 @@ class PedidoProvider with ChangeNotifier {
             fechaEstimada: pedido.fechaEstimada ?? existing.fechaEstimada,
             estadoDevolucion: pedido.estadoDevolucion ?? existing.estadoDevolucion,
             devolucionInfo: pedido.devolucionInfo ?? existing.devolucionInfo,
+            motivoAnulacion: pedido.motivoAnulacion ?? existing.motivoAnulacion,
             items: existing.items.isNotEmpty ? existing.items : pedido.items,
           );
         }).toList();
@@ -337,6 +342,7 @@ class PedidoProvider with ChangeNotifier {
             trackingLink: shippingData?['tracking_link'] ?? old.trackingLink,
             fechaEnvio: shippingData?['fecha_envio'] ?? old.fechaEnvio,
             fechaEstimada: shippingData?['fecha_estimada'] ?? old.fechaEstimada,
+            motivoAnulacion: old.motivoAnulacion,
             items: old.items,
           );
           notifyListeners();
@@ -446,6 +452,7 @@ class PedidoProvider with ChangeNotifier {
               fechaEstimada: updatedOrder.fechaEstimada ?? existing.fechaEstimada,
               estadoDevolucion: updatedOrder.estadoDevolucion ?? existing.estadoDevolucion,
               devolucionInfo: updatedOrder.devolucionInfo ?? existing.devolucionInfo,
+              motivoAnulacion: updatedOrder.motivoAnulacion ?? existing.motivoAnulacion,
               items: updatedOrder.items.isNotEmpty ? updatedOrder.items : existing.items,
             );
             notifyListeners();
@@ -496,6 +503,7 @@ class PedidoProvider with ChangeNotifier {
             trackingLink: old.trackingLink,
             fechaEnvio: old.fechaEnvio,
             fechaEstimada: old.fechaEstimada,
+            motivoAnulacion: old.motivoAnulacion,
             items: old.items,
           );
           notifyListeners();
@@ -548,6 +556,7 @@ class PedidoProvider with ChangeNotifier {
             trackingLink: old.trackingLink,
             fechaEnvio: old.fechaEnvio,
             fechaEstimada: old.fechaEstimada,
+            motivoAnulacion: old.motivoAnulacion,
             items: old.items,
           );
           notifyListeners();
@@ -556,6 +565,63 @@ class PedidoProvider with ChangeNotifier {
       }
       return false;
     } catch (e) {
+      return false;
+    }
+  }
+
+  /// Cancelar pedido desde el cliente
+  Future<bool> cancelarPedidoCliente({
+    required String token,
+    required String idPedido,
+    String? motivo,
+  }) async {
+    try {
+      final response = await http.put(
+        Uri.parse('$_baseUrl/orders/$idPedido/cancel-client'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: json.encode({
+          'motivo': motivo?.isNotEmpty == true ? motivo : 'Cancelado por el cliente',
+        }),
+      );
+
+      final data = json.decode(response.body);
+
+      if (response.statusCode == 200 && data['ok'] == true) {
+        final index = _pedidos.indexWhere((p) => p.id == idPedido);
+        if (index != -1) {
+          final old = _pedidos[index];
+          _pedidos[index] = OrderModel(
+            id: old.id,
+            fecha: old.fecha,
+            direccion: old.direccion,
+            ciudad: old.ciudad,
+            departamento: old.departamento,
+            total: old.total,
+            estado: 'cancelado',
+            metodoPago: old.metodoPago,
+            pagoConfirmado: old.pagoConfirmado,
+            comprobanteUrl: old.comprobanteUrl,
+            clienteNombre: old.clienteNombre,
+            clienteEmail: old.clienteEmail,
+            transportadora: old.transportadora,
+            numeroGuia: old.numeroGuia,
+            trackingLink: old.trackingLink,
+            fechaEnvio: old.fechaEnvio,
+            fechaEstimada: old.fechaEstimada,
+            motivoAnulacion: motivo,
+            items: old.items,
+          );
+          notifyListeners();
+        }
+        return true;
+      }
+      _errorMessage = data['message'] ?? 'Error al cancelar el pedido';
+      return false;
+    } catch (e) {
+      _errorMessage = 'Error de conexión al cancelar el pedido';
       return false;
     }
   }

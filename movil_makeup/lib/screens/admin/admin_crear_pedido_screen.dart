@@ -9,6 +9,7 @@ import '../../providers/producto_provider.dart';
 import '../../providers/pedido_provider.dart';
 import '../../config/theme.dart';
 import '../../config/api_config.dart';
+import '../../data/colombia_data.dart';
 
 class ClientOption {
   final int idUsuario;
@@ -54,8 +55,8 @@ class AdminCrearPedidoScreen extends StatefulWidget {
 class _AdminCrearPedidoScreenState extends State<AdminCrearPedidoScreen> {
   final _formKey = GlobalKey<FormState>();
   final _direccionController = TextEditingController();
-  final _ciudadController = TextEditingController();
-  final _departamentoController = TextEditingController();
+  String? _departamentoSeleccionado;
+  String? _ciudadSeleccionada;
   final _cantidadController = TextEditingController(text: '1');
 
   List<ClientOption> _clientes = [];
@@ -297,8 +298,8 @@ class _AdminCrearPedidoScreenState extends State<AdminCrearPedidoScreen> {
       token: authProv.token!,
       idCliente: _selectedCliente!.idUsuario,
       direccion: _direccionController.text.trim(),
-      ciudad: _ciudadController.text.trim(),
-      departamento: _departamentoController.text.trim(),
+      ciudad: _ciudadSeleccionada ?? '',
+      departamento: _departamentoSeleccionado ?? '',
       metodoPago: _metodoPago,
       items: _addedItems.map((it) => {
         'id_producto': it['id_producto'],
@@ -326,8 +327,6 @@ class _AdminCrearPedidoScreenState extends State<AdminCrearPedidoScreen> {
   @override
   void dispose() {
     _direccionController.dispose();
-    _ciudadController.dispose();
-    _departamentoController.dispose();
     _cantidadController.dispose();
     super.dispose();
   }
@@ -393,11 +392,13 @@ class _AdminCrearPedidoScreenState extends State<AdminCrearPedidoScreen> {
                                   );
                                 },
                                 onSelected: (ClientOption selection) {
+                                  final dept = selection.departamento ?? '';
+                                  final ciud = selection.ciudad ?? '';
                                   setState(() {
                                     _selectedCliente = selection;
                                     _direccionController.text = selection.direccion ?? '';
-                                    _ciudadController.text = selection.ciudad ?? '';
-                                    _departamentoController.text = selection.departamento ?? '';
+                                    _departamentoSeleccionado = dept.isNotEmpty && colombianDepartments.contains(dept) ? dept : null;
+                                    _ciudadSeleccionada = (_departamentoSeleccionado != null && ciud.isNotEmpty && mainCities[_departamentoSeleccionado]?.contains(ciud) == true) ? ciud : null;
                                   });
                                 },
                               ),
@@ -465,35 +466,46 @@ class _AdminCrearPedidoScreenState extends State<AdminCrearPedidoScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Expanded(
-                                    child: TextFormField(
-                                      controller: _ciudadController,
-                                      autovalidateMode: AutovalidateMode.onUserInteraction,
-                                      maxLength: 50,
+                                    child: DropdownButtonFormField<String>(
+                                      value: _departamentoSeleccionado,
+                                      isExpanded: true,
                                       decoration: const InputDecoration(
-                                        labelText: "Ciudad *",
+                                        labelText: "Departamento *",
                                         counterText: "",
                                       ),
-                                      validator: (val) {
-                                        if (val == null || val.trim().isEmpty) return 'La ciudad es obligatoria';
-                                        if (val.trim().length < 3) return 'Mínimo 3 caracteres';
+                                      items: colombianDepartments.map((d) => DropdownMenuItem(value: d, child: Text(d))).toList(),
+                                      onChanged: (v) {
+                                        setState(() {
+                                          _departamentoSeleccionado = v;
+                                          _ciudadSeleccionada = null;
+                                        });
+                                      },
+                                      validator: (v) {
+                                        if (v == null || v.isEmpty) return 'Requerido';
                                         return null;
                                       },
                                     ),
                                   ),
                                   const SizedBox(width: 12),
                                   Expanded(
-                                    child: TextFormField(
-                                      controller: _departamentoController,
-                                      autovalidateMode: AutovalidateMode.onUserInteraction,
-                                      maxLength: 50,
+                                    child: DropdownButtonFormField<String>(
+                                      value: _ciudadSeleccionada,
+                                      isExpanded: true,
                                       decoration: const InputDecoration(
-                                        labelText: "Departamento *",
+                                        labelText: "Ciudad *",
                                         counterText: "",
                                       ),
-                                      validator: (val) {
-                                        if (val == null || val.trim().isEmpty) return 'El departamento es obligatorio';
+                                      items: _departamentoSeleccionado != null && mainCities[_departamentoSeleccionado]!.isNotEmpty
+                                          ? mainCities[_departamentoSeleccionado]!.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList()
+                                          : [],
+                                      onChanged: _departamentoSeleccionado == null
+                                          ? null
+                                          : (v) => setState(() => _ciudadSeleccionada = v),
+                                      validator: (v) {
+                                        if (v == null || v.isEmpty) return 'Requerida';
                                         return null;
                                       },
+                                      disabledHint: const Text('Selecciona depto.'),
                                     ),
                                   ),
                                 ],

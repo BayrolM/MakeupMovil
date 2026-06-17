@@ -150,6 +150,22 @@ class _ClientePagoScreenState extends State<ClientePagoScreen> {
         idPedido: pedidoId,
         comprobanteUrl: comprobanteUrl,
       );
+
+      // Guardar dirección en el perfil si es primera vez
+      final profile = authProv.userProfile;
+      final profileDireccion = profile?['direccion'] ?? '';
+      final profileCiudad = profile?['ciudad'] ?? '';
+      final profileDepto = profile?['departamento'] ?? '';
+      if ((profileDireccion.isEmpty && direccion.isNotEmpty) ||
+          (profileCiudad.isEmpty && ciudad.isNotEmpty) ||
+          (profileDepto.isEmpty && departamento.isNotEmpty)) {
+        await authProv.actualizarPerfil(
+          token: authProv.token!,
+          direccion: direccion.isNotEmpty ? direccion : null,
+          ciudad: ciudad.isNotEmpty ? ciudad : null,
+          departamento: departamento.isNotEmpty ? departamento : null,
+        );
+      }
     }
 
     if (mounted) {

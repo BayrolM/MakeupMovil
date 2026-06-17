@@ -321,7 +321,15 @@ class _ClienteHomeScreenState extends State<ClienteHomeScreen> with SingleTicker
                                               ),
                                               onChanged: (val) {
                                                 final parsed = int.tryParse(val);
-                                                if (parsed == null) return;
+                                                if (parsed == null || parsed <= 0) {
+                                                  qtyController.text = '1';
+                                                  qtyController.selection = TextSelection.fromPosition(
+                                                    const TextPosition(offset: 1),
+                                                  );
+                                                  carritoProv.setCantidad(item.id, 1);
+                                                  setModalState(() {});
+                                                  return;
+                                                }
                                                 if (parsed > item.maxStock) {
                                                   qtyController.text = item.maxStock.toString();
                                                   qtyController.selection = TextSelection.fromPosition(
@@ -330,7 +338,7 @@ class _ClienteHomeScreenState extends State<ClienteHomeScreen> with SingleTicker
                                                   carritoProv.setCantidad(item.id, item.maxStock);
                                                   setModalState(() {});
                                                   _showTopAlert('Stock máximo disponible: ${item.maxStock} unidades');
-                                                } else if (parsed > 0) {
+                                                } else {
                                                   carritoProv.setCantidad(item.id, parsed);
                                                   setModalState(() {});
                                                 }
@@ -338,7 +346,11 @@ class _ClienteHomeScreenState extends State<ClienteHomeScreen> with SingleTicker
                                               onSubmitted: (val) {
                                                 final newQty = int.tryParse(val);
                                                 if (newQty == null || newQty <= 0) {
-                                                  carritoProv.eliminarItem(item.id);
+                                                  qtyController.text = '1';
+                                                  qtyController.selection = TextSelection.fromPosition(
+                                                    const TextPosition(offset: 1),
+                                                  );
+                                                  carritoProv.setCantidad(item.id, 1);
                                                   setModalState(() {});
                                                   return;
                                                 }
@@ -1416,6 +1428,34 @@ class _ClienteHomeScreenState extends State<ClienteHomeScreen> with SingleTicker
                       if (order.fechaEstimada != null && order.fechaEstimada!.isNotEmpty)
                         Text("Llegada estimada: ${_formatDate(order.fechaEstimada!)}", style: const TextStyle(fontSize: 13)),
                     ],
+                    if (order.estado.toLowerCase() == 'cancelado' && order.motivoAnulacion != null && order.motivoAnulacion!.isNotEmpty) ...[
+                      const SizedBox(height: 10),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Colors.red.withOpacity(0.08),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.red.withOpacity(0.3)),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.cancel_outlined, color: Colors.red, size: 18),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text("Motivo de cancelación:", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.red)),
+                                  const SizedBox(height: 2),
+                                  Text(order.motivoAnulacion!, style: TextStyle(fontSize: 12, color: Colors.grey.shade700)),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 8),
                     const Text("Método de Pago:", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                     Text(order.metodoPago.toUpperCase()),
@@ -1462,6 +1502,25 @@ class _ClienteHomeScreenState extends State<ClienteHomeScreen> with SingleTicker
                       _buildDevolucionDetail(order.devolucionInfo!),
                     ],
 
+                    // ── Botón Cancelar Pedido ─────────────
+                    if (['pendiente', 'preparado', 'procesando'].contains(order.estado.toLowerCase())) ...[
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: () => _showCancelarPedidoDialog(order),
+                          icon: const Icon(Icons.cancel_outlined, size: 18),
+                          label: const Text('Cancelar Pedido', style: TextStyle(fontWeight: FontWeight.bold)),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.red,
+                            side: const BorderSide(color: Colors.red, width: 1.5),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
+                        ),
+                      ),
+                    ],
+
                     // ── Botón Solicitar Devolución ─────────
                     if (order.estado.toLowerCase() == 'entregado' && order.estadoDevolucion == null) ...[
                       const SizedBox(height: 16),
@@ -1501,6 +1560,158 @@ class _ClienteHomeScreenState extends State<ClienteHomeScreen> with SingleTicker
       },
     ),
     );
+  }
+
+  void _showCancelarPedidoDialog(OrderModel order) {
+    String? motivoSeleccionado;
+    final otroController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+
+    final motivos = [
+      'Encontré un precio mejor',
+      'Compré por error',
+      'Demora en el envío',
+      'Ya no lo necesito',
+      'Otro',
+    ];
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Row(
+            children: [
+              Icon(Icons.warning_amber_rounded, color: Colors.red, size: 28),
+              SizedBox(width: 8),
+              Text("Cancelar Pedido", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Form(
+              key: formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "¿Estás segura de cancelar el pedido #${order.id}?",
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.red.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.red.withOpacity(0.3)),
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(Icons.info_outline, color: Colors.red, size: 18),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            "Esta acción no se puede deshacer. El stock será devuelto automáticamente.",
+                            style: TextStyle(color: Colors.red, fontSize: 12, fontWeight: FontWeight.w500),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text("Selecciona un motivo:", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                  const SizedBox(height: 8),
+                  DropdownButtonFormField<String>(
+                    value: motivoSeleccionado,
+                    hint: const Text("Motivo de cancelación *"),
+                    isExpanded: true,
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                    ),
+                    items: motivos.map((m) => DropdownMenuItem(value: m, child: Text(m))).toList(),
+                    onChanged: (val) {
+                      setDialogState(() => motivoSeleccionado = val);
+                    },
+                    validator: (val) => val == null ? 'Selecciona un motivo' : null,
+                  ),
+                  if (motivoSeleccionado == 'Otro') ...[
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: otroController,
+                      maxLines: 3,
+                      maxLength: 200,
+                      decoration: const InputDecoration(
+                        hintText: "Escribe el motivo *",
+                        border: OutlineInputBorder(),
+                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                      ),
+                      validator: (val) {
+                        if (motivoSeleccionado == 'Otro' && (val == null || val.trim().length < 3)) {
+                          return 'Escribe al menos 3 caracteres';
+                        }
+                        return null;
+                      },
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text("CERRAR"),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                if (!formKey.currentState!.validate()) return;
+                final motivo = motivoSeleccionado == 'Otro' ? otroController.text.trim() : motivoSeleccionado;
+                Navigator.pop(ctx);
+                await _ejecutarCancelarPedido(order.id, motivo);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text("SÍ, CANCELAR"),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _ejecutarCancelarPedido(String idPedido, String? motivo) async {
+    if (!mounted) return;
+    final authProv = Provider.of<AuthProvider>(context, listen: false);
+    final pedidoProv = Provider.of<PedidoProvider>(context, listen: false);
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation(AppTheme.deepRose))),
+    );
+
+    final success = await pedidoProv.cancelarPedidoCliente(
+      token: authProv.token!,
+      idPedido: idPedido,
+      motivo: motivo,
+    );
+
+    if (mounted) {
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(success
+              ? "Pedido cancelado correctamente."
+              : (pedidoProv.errorMessage ?? "No se pudo cancelar el pedido.")),
+          backgroundColor: success ? Colors.green : Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   Widget _buildStatusChip(OrderModel order) {

@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../config/theme.dart';
+import '../../data/colombia_data.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -28,8 +30,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   // Step 2: Ubicación
   final _emailController = TextEditingController();
   final _telefonoController = TextEditingController();
-  final _ciudadController = TextEditingController();
-  final _departamentoController = TextEditingController();
+  String? _departamentoSeleccionado;
+  String? _ciudadSeleccionada;
   final _direccionController = TextEditingController();
 
   // Step 3: Seguridad
@@ -42,20 +44,51 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _codeController = TextEditingController();
   String _registeredEmail = '';
 
+  // Validación en tiempo real de email
+  Timer? _emailDebounce;
+  bool _isCheckingEmail = false;
+  String? _emailError;
+
   @override
   void dispose() {
+    _emailDebounce?.cancel();
     _documentoController.dispose();
     _nombresController.dispose();
     _apellidosController.dispose();
     _emailController.dispose();
     _telefonoController.dispose();
-    _ciudadController.dispose();
-    _departamentoController.dispose();
     _direccionController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     _codeController.dispose();
     super.dispose();
+  }
+
+  // ── Validación de email en tiempo real ──────────────────────
+
+  void _checkEmailAvailability(String email) {
+    _emailDebounce?.cancel();
+    if (email.trim().isEmpty || !RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(email.trim())) {
+      setState(() {
+        _isCheckingEmail = false;
+        _emailError = null;
+      });
+      return;
+    }
+    setState(() {
+      _isCheckingEmail = true;
+      _emailError = null;
+    });
+    _emailDebounce = Timer(const Duration(milliseconds: 800), () async {
+      if (!mounted) return;
+      final authProv = Provider.of<AuthProvider>(context, listen: false);
+      final exists = await authProv.checkEmail(email.trim());
+      if (!mounted) return;
+      setState(() {
+        _isCheckingEmail = false;
+        _emailError = exists ? 'Este correo ya está registrado' : null;
+      });
+    });
   }
 
   // ── Navegación entre pasos ─────────────────────────────────
@@ -65,6 +98,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       if (!_formKey1.currentState!.validate()) return;
     } else if (_currentStep == 2) {
       if (!_formKey2.currentState!.validate()) return;
+      if (_emailError != null) return;
     } else if (_currentStep == 3) {
       if (!_formKey3.currentState!.validate()) {
         return;
@@ -95,8 +129,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       password: _passwordController.text,
       documento: _documentoController.text.trim(),
       direccion: _direccionController.text.trim(),
-      ciudad: _ciudadController.text.trim(),
-      departamento: _departamentoController.text.trim(),
+      ciudad: _ciudadSeleccionada ?? '',
+      departamento: _departamentoSeleccionado ?? '',
     );
 
     if (!mounted) return;
@@ -266,11 +300,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
           TextFormField(
             controller: _documentoController,
-            keyboardType: _tipoDocumento == 'PAS' ? TextInputType.text : TextInputType.number,
+            keyboardType: (_tipoDocumento == 'PAS' || _tipoDocumento == 'CE') ? TextInputType.text : TextInputType.number,
             maxLength: 15,
             autovalidateMode: AutovalidateMode.onUserInteraction,
-            inputFormatters: _tipoDocumento == 'PAS'
-                ? [FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]'))]
+            inputFormatters: (_tipoDocumento == 'PAS' || _tipoDocumento == 'CE')
+                ? [
+                    FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
+                    UpperCaseTextFormatter(),
+                  ]
                 : [FilteringTextInputFormatter.digitsOnly],
             validator: (v) {
               if (v == null || v.trim().isEmpty) return 'Requerido';
@@ -286,10 +323,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
             textCapitalization: TextCapitalization.words,
             maxLength: 30,
             autovalidateMode: AutovalidateMode.onUserInteraction,
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]')),
+            ],
             validator: (v) {
               if (v == null || v.trim().isEmpty) return 'Requerido';
               if (v.trim().length < 2) return 'Mínimo 2 caracteres';
+              if (!RegExp(r'^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$').hasMatch(v.trim())) return 'Solo se permiten letras';
               return null;
+            },
+            onChanged: (val) {
+              if (val.isNotEmpty && val.length == 1) {
+                _nombresController.value = TextEditingValue(
+                  text: val.toUpperCase(),
+                  selection: TextSelection.fromPosition(const TextPosition(offset: 1)),
+                );
+              }
             },
             decoration: const InputDecoration(labelText: 'Nombres', prefixIcon: Icon(Icons.person_outline, color: AppTheme.deepRose), counterText: ''),
           ),
@@ -300,10 +349,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
             textCapitalization: TextCapitalization.words,
             maxLength: 30,
             autovalidateMode: AutovalidateMode.onUserInteraction,
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]')),
+            ],
             validator: (v) {
               if (v == null || v.trim().isEmpty) return 'Requerido';
               if (v.trim().length < 2) return 'Mínimo 2 caracteres';
+              if (!RegExp(r'^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$').hasMatch(v.trim())) return 'Solo se permiten letras';
               return null;
+            },
+            onChanged: (val) {
+              if (val.isNotEmpty && val.length == 1) {
+                _apellidosController.value = TextEditingValue(
+                  text: val.toUpperCase(),
+                  selection: TextSelection.fromPosition(const TextPosition(offset: 1)),
+                );
+              }
             },
             decoration: const InputDecoration(labelText: 'Apellidos', prefixIcon: Icon(Icons.person_outline, color: AppTheme.deepRose), counterText: ''),
           ),
@@ -332,12 +393,32 @@ class _RegisterScreenState extends State<RegisterScreen> {
             keyboardType: TextInputType.emailAddress,
             maxLength: 40,
             autovalidateMode: AutovalidateMode.onUserInteraction,
+            onChanged: (val) => _checkEmailAvailability(val),
             validator: (v) {
               if (v == null || v.trim().isEmpty) return 'Requerido';
               if (!RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(v.trim())) return 'Email no válido';
+              if (_emailError != null) return _emailError;
               return null;
             },
-            decoration: const InputDecoration(labelText: 'Correo Electrónico', prefixIcon: Icon(Icons.email_outlined, color: AppTheme.deepRose), counterText: ''),
+            decoration: InputDecoration(
+              labelText: 'Correo Electrónico',
+              prefixIcon: const Icon(Icons.email_outlined, color: AppTheme.deepRose),
+              counterText: '',
+              suffixIcon: _isCheckingEmail
+                  ? const Padding(
+                      padding: EdgeInsets.all(12),
+                      child: SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.deepRose),
+                      ),
+                    )
+                  : _emailError != null
+                      ? const Icon(Icons.error_outline, color: Colors.red, size: 20)
+                      : _emailController.text.isNotEmpty && _emailError == null && !_isCheckingEmail
+                          ? const Icon(Icons.check_circle_outline, color: Colors.green, size: 20)
+                          : null,
+            ),
           ),
           const SizedBox(height: 16),
 
@@ -356,31 +437,40 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ),
           const SizedBox(height: 16),
 
-          TextFormField(
-            controller: _ciudadController,
-            textCapitalization: TextCapitalization.words,
-            maxLength: 50,
-            autovalidateMode: AutovalidateMode.onUserInteraction,
-            validator: (v) {
-              if (v == null || v.trim().isEmpty) return 'Requerido';
-              if (v.trim().length < 3) return 'Mínimo 3 caracteres';
-              return null;
+          DropdownButtonFormField<String>(
+            value: _departamentoSeleccionado,
+            isExpanded: true,
+            decoration: const InputDecoration(
+              labelText: 'Departamento (opcional)',
+              prefixIcon: Icon(Icons.map_outlined, color: AppTheme.deepRose),
+            ),
+            items: colombianDepartments.map((d) => DropdownMenuItem(value: d, child: Text(d))).toList(),
+            onChanged: (v) {
+              setState(() {
+                _departamentoSeleccionado = v;
+                _ciudadSeleccionada = null;
+              });
             },
-            decoration: const InputDecoration(labelText: 'Ciudad', prefixIcon: Icon(Icons.location_city, color: AppTheme.deepRose), counterText: ''),
           ),
           const SizedBox(height: 16),
 
-          TextFormField(
-            controller: _departamentoController,
-            textCapitalization: TextCapitalization.words,
-            maxLength: 50,
-            autovalidateMode: AutovalidateMode.onUserInteraction,
-            validator: (v) {
-              if (v == null || v.trim().isEmpty) return 'Requerido';
-              if (v.trim().length < 3) return 'Mínimo 3 caracteres';
-              return null;
-            },
-            decoration: const InputDecoration(labelText: 'Departamento', prefixIcon: Icon(Icons.map_outlined, color: AppTheme.deepRose), counterText: ''),
+          DropdownButtonFormField<String>(
+            value: _ciudadSeleccionada,
+            isExpanded: true,
+            decoration: InputDecoration(
+              labelText: 'Ciudad (opcional)',
+              prefixIcon: const Icon(Icons.location_city, color: AppTheme.deepRose),
+              enabledBorder: _departamentoSeleccionado == null
+                  ? const OutlineInputBorder(borderSide: BorderSide(color: Colors.grey))
+                  : null,
+            ),
+            items: _departamentoSeleccionado != null && mainCities[_departamentoSeleccionado]!.isNotEmpty
+                ? mainCities[_departamentoSeleccionado]!.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList()
+                : [],
+            onChanged: _departamentoSeleccionado == null
+                ? null
+                : (v) => setState(() => _ciudadSeleccionada = v),
+            disabledHint: const Text('Selecciona un departamento primero'),
           ),
           const SizedBox(height: 16),
 
@@ -390,11 +480,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
             maxLength: 30,
             autovalidateMode: AutovalidateMode.onUserInteraction,
             validator: (v) {
-              if (v == null || v.trim().isEmpty) return 'Requerido';
+              if (v == null || v.trim().isEmpty) return null;
               if (v.trim().length < 10) return 'Mínimo 10 caracteres';
               return null;
             },
-            decoration: const InputDecoration(labelText: 'Dirección', prefixIcon: Icon(Icons.home_outlined, color: AppTheme.deepRose), counterText: ''),
+            decoration: const InputDecoration(labelText: 'Dirección (opcional)', prefixIcon: Icon(Icons.home_outlined, color: AppTheme.deepRose), counterText: ''),
           ),
           const SizedBox(height: 32),
 
@@ -574,6 +664,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
         style: ElevatedButton.styleFrom(backgroundColor: Colors.transparent, shadowColor: Colors.transparent, padding: const EdgeInsets.symmetric(vertical: 16)),
         child: Text(label, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 1.2, color: Colors.white)),
       ),
+    );
+  }
+}
+
+class UpperCaseTextFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+    return TextEditingValue(
+      text: newValue.text.toUpperCase(),
+      selection: newValue.selection,
     );
   }
 }
